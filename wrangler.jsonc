@@ -1,0 +1,35 @@
+{
+  // Dazzling E-Bikes demo store: runs entirely on Cloudflare.
+  // Workers (code) + Static Assets (storefront) + D1 (data) + Turnstile (bot check) + Access (/admin).
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dazzling-shop",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-01",
+  "observability": { "enabled": true },
+
+  // Storefront HTML, CSS, JS and images are served straight from the edge.
+  // Anything that is not a file (/api/*, /admin) runs the Worker.
+  "assets": { "directory": "./public", "binding": "ASSETS", "not_found_handling": "none" },
+
+  // Serve on your own domain so WAF, rate limiting and Access all apply.
+  // Change nzioka.dev if you use another zone.
+  "routes": [{ "pattern": "shop.nzioka.dev", "custom_domain": true }],
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "dazzling-shop",
+      "database_id": "150bbc38-4910-4250-9de3-2b0f0fc5b9ae",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  "vars": {
+    // Turnstile test site key (always passes). Replace with your own for the real demo.
+    "TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
+    // Your Zero Trust team domain and the Access application AUD tag, for /admin.
+    "ACCESS_TEAM_DOMAIN": "",
+    "ACCESS_AUD": ""
+  }
+  // Secret, set with: npx wrangler secret put TURNSTILE_SECRET
+}

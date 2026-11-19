@@ -1,0 +1,50 @@
+:root {
+  --ink: #12211c; --soft: #5b6b65; --paper: #fbfaf6; --card: #ffffff; --line: #e4e2da;
+  --brand: #0f8a6a; --brand-ink: #0a5e48; --sun: #f2b632; --err: #b3261e; --ok: #1d7a3a;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: var(--ink); background: var(--paper); }
+a { color: var(--brand-ink); }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+.bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; background: var(--card); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 2; }
+.brand { font-weight: 800; font-size: 20px; text-decoration: none; color: var(--ink); letter-spacing: -0.02em; }
+.brand span { color: var(--brand); margin-left: 4px; }
+nav a { margin-left: 20px; text-decoration: none; color: var(--soft); font-weight: 600; }
+nav a:hover { color: var(--ink); }
+.hero { background: linear-gradient(135deg, #0f8a6a 0%, #13a37d 55%, #f2b632 140%); color: #fff; padding: 88px 0 96px; }
+.hero h1 { font-size: clamp(40px, 6vw, 68px); line-height: 1.02; margin: 8px 0 16px; letter-spacing: -0.03em; }
+.kicker { font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; font-size: 13px; opacity: 0.9; margin: 0; }
+.sub { font-size: 20px; max-width: 560px; opacity: 0.95; margin: 0 0 28px; }
+.btn { display: inline-block; background: var(--ink); color: #fff; border: 0; border-radius: 999px; padding: 12px 22px; font-weight: 700; font-size: 15px; cursor: pointer; text-decoration: none; }
+.hero .btn { background: #fff; color: var(--brand-ink); }
+.btn.small { padding: 8px 16px; font-size: 14px; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+h2 { font-size: 28px; letter-spacing: -0.02em; margin: 56px 0 20px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+.bike { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; }
+.bike img { width: 100%; height: auto; border-radius: 10px; background: #eef5f2; }
+.bike h3 { margin: 14px 0 2px; font-size: 18px; }
+.bike .tag { margin: 0 0 8px; font-size: 14px; }
+.spec { font-size: 14px; margin: 0 0 14px; }
+.row { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+.note { grid-column: 1 / -1; font-size: 13px; }
+.muted { color: var(--soft); }
+.account { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; margin-bottom: 64px; }
+.account h2 { margin-top: 56px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 24px; margin-top: 56px; display: grid; gap: 14px; }
+label { display: grid; gap: 6px; font-weight: 600; font-size: 14px; }
+input { font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; }
+.msg { min-height: 1.5em; margin: 0; font-weight: 600; }
+.msg.err { color: var(--err); } .msg.ok { color: var(--ok); }
+code { background: #eef0ea; padding: 2px 6px; border-radius: 6px; }
+.foot { border-top: 1px solid var(--line); padding: 24px 0; background: var(--card); }
+.foot .wrap { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; font-size: 14px; }
+.pill { background: #e7f4ef; color: var(--brand-ink); border-radius: 999px; padding: 6px 12px; font-weight: 700; font-size: 13px; }
+.admin h1 { margin-top: 32px; }
+.kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.kpis div { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+.kpis b { display: block; font-size: 32px; } .kpis span { color: var(--soft); font-size: 14px; }
+table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; font-size: 14px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+th { background: #f3f2ec; }
+@media (max-width: 760px) { .account { grid-template-columns: 1fr; } nav a { margin-left: 12px; } .kpis { grid-template-columns: 1fr; } }

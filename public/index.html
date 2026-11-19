@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dazzling E-Bikes · Ride further</title>
+<link rel="stylesheet" href="/styles.css">
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
+<script src="/app.js" defer></script>
+</head>
+<body>
+<header class="bar">
+  <a class="brand" href="/">Dazzling<span>E-Bikes</span></a>
+  <nav>
+    <a href="#bikes">Bikes</a>
+    <a href="#account">Rider account</a>
+    <a href="/admin">Admin</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <p class="kicker">New season · free delivery in Nairobi, Lagos and Johannesburg</p>
+    <h1>Ride further.<br>Arrive fresher.</h1>
+    <p class="sub">Electric bikes built for city traffic, steep hills and the school run.</p>
+    <a class="btn" href="#bikes">Shop the range</a>
+  </div>
+</section>
+
+<main class="wrap">
+  <section id="bikes">
+    <h2>The range</h2>
+    <div id="grid" class="grid"><p class="muted">Loading bikes…</p></div>
+  </section>
+
+  <section id="account" class="account">
+    <div>
+      <h2>Rider account</h2>
+      <p class="muted">Sign in to track orders and servicing. Demo rider: <code>demo@dazzling.bike</code> / <code>RideSafe-2026</code></p>
+    </div>
+    <form id="login" class="card">
+      <label>Email <input name="email" type="email" autocomplete="username" required></label>
+      <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
+      <div id="turnstile"></div>
+      <button class="btn" type="submit">Sign in</button>
+      <p id="login-msg" class="msg" role="status"></p>
+    </form>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <span id="edge" class="pill">Checking where you’re served from…</span>
+    <span class="muted">This store has no servers. It runs on Cloudflare Workers, D1 and Static Assets.</span>
+  </div>
+</footer>
+</body>
+</html>
