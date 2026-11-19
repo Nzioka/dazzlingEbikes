@@ -3,6 +3,7 @@
 const $ = (s) => document.querySelector(s);
 const money = (n) => "$" + Number(n).toLocaleString("en-US");
 let turnstileWidget = null;
+let account = null; // { rider, orders } while signed in
 
 async function loadBikes() {
   const grid = $("#grid");
@@ -33,16 +34,55 @@ async function loadBikes() {
 }
 
 async function order(bike) {
-  const email = prompt(`Order ${bike.name}. Your email?`, "demo@dazzling.bike");
-  if (!email) return;
+  let body;
+  if (account) {
+    if (!confirm(`Order ${bike.name} for ${money(bike.price_usd)}?`)) return;
+    body = { bikeId: bike.id };
+  } else {
+    const email = prompt(`Order ${bike.name}. Your email?`, "demo@dazzling.bike");
+    if (!email) return;
+    body = { bikeId: bike.id, email };
+  }
   const r = await fetch("/api/orders", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ bikeId: bike.id, email }),
+    body: JSON.stringify(body),
   });
-  const out = await r.json();
-  alert(r.ok ? `Order #${out.orderId} confirmed.` : `Order failed: ${out.error}`);
+  const out = await r.json().catch(() => ({}));
+  alert(r.ok
+    ? `Order #${out.orderId} confirmed.${account ? " You'll find it under Rider account." : ""}`
+    : `Order failed: ${out.error || r.status}`);
   loadBikes();
+  if (account) loadAccount();
+}
+
+async function loadAccount() {
+  try {
+    const out = await (await fetch("/api/me")).json();
+    account = out.signedIn ? out : null;
+  } catch {
+    account = null;
+  }
+  renderAccount();
+}
+
+function renderAccount() {
+  $("#login").hidden = !!account;
+  $("#me").hidden = !account;
+  if (!account) return;
+  $("#me-name").textContent = account.rider.name;
+  $("#me-email").textContent = account.rider.email;
+  const list = $("#me-orders");
+  list.innerHTML = "";
+  if (!account.orders.length) {
+    list.innerHTML = `<li class="muted">No orders yet. Pick a bike from the range above.</li>`;
+  }
+  for (const o of account.orders) {
+    const li = document.createElement("li");
+    const when = String(o.created_at).slice(0, 16);
+    li.textContent = `#${o.id} · ${o.bike_name} · ${money(o.price_usd)} · ${when} UTC`;
+    list.appendChild(li);
+  }
 }
 
 async function setupLogin() {
@@ -71,8 +111,10 @@ async function setupLogin() {
     let out = {};
     try { out = await r.json(); } catch {}
     if (r.ok) {
-      msg.className = "msg ok";
-      msg.textContent = `Welcome back, ${out.rider.name}.`;
+      msg.className = "msg";
+      msg.textContent = "";
+      f.reset();
+      await loadAccount();
     } else if (r.status === 429) {
       msg.className = "msg err";
       msg.textContent = "Too many attempts. Please wait a few seconds.";
@@ -163,7 +205,14 @@ function setupAssistant() {
   form.addEventListener("submit", (e) => { e.preventDefault(); ask(input.value); });
 }
 
+$("#signout").addEventListener("click", async () => {
+  await fetch("/api/logout", { method: "POST" }).catch(() => {});
+  account = null;
+  renderAccount();
+});
+
 loadBikes();
+loadAccount();
 setupLogin();
 showEdge();
 setupAssistant();

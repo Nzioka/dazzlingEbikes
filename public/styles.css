@@ -3,6 +3,7 @@
   --brand: #e4500e; --brand-ink: #9a3412; --sun: #f7a21b; --err: #b3261e; --ok: #1d7a3a;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { margin: 0; font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: var(--ink); background: var(--paper); }
 a { color: var(--brand-ink); }
 .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
@@ -47,6 +48,13 @@ code { background: #eef0ea; padding: 2px 6px; border-radius: 6px; }
 table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; font-size: 14px; }
 th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
 th { background: #f3f2ec; }
+/* Rider account */
+.me-head { margin: 0; display: grid; gap: 2px; }
+.me-head b { font-size: 18px; }
+.card h3 { margin: 4px 0 0; font-size: 16px; }
+.orders { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; }
+#signout { justify-self: start; }
+
 /* Rider Assistant */
 .assist-fab { position: fixed; right: 20px; bottom: 20px; z-index: 5; background: var(--brand-ink); color: #fff; border: 0; border-radius: 999px; padding: 14px 20px; font: inherit; font-weight: 700; font-size: 15px; cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,.18); }
 .assist { position: fixed; right: 20px; bottom: 20px; z-index: 5; width: min(380px, calc(100vw - 32px)); height: min(560px, calc(100vh - 40px)); background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 12px 40px rgba(0,0,0,.2); display: flex; flex-direction: column; overflow: hidden; }

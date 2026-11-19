@@ -34,6 +34,8 @@ async function route(request, env, ctx, url) {
   if (bike && method === "GET") return getBike(env, bike[1]);
 
   if (pathname === "/api/login" && method === "POST") return login(request, env);
+  if (pathname === "/api/logout" && method === "POST") return logout(request, env);
+  if (pathname === "/api/me" && method === "GET") return me(request, env);
   if (pathname === "/api/orders" && method === "POST") return createOrder(request, env, ctx, url);
   if (pathname === "/api/assistant" && method === "POST") return assistant(request, env);
 
@@ -108,7 +110,13 @@ async function login(request, env) {
   await logLogin(env, email, ok, ok ? "ok" : "bad_credentials", ip, cf.colo);
 
   if (!ok) return json({ error: "invalid_credentials" }, 401);
-  return json({ ok: true, rider: { name: rider.name, email: rider.email } });
+
+  // 3. Start a session: random token in an HttpOnly cookie, its hash in D1.
+  const sessionToken = await createSession(env, rider.email);
+  return json({ ok: true, rider: { name: rider.name, email: rider.email } }, 200, {
+    "set-cookie": sessionCookie(sessionToken, SESSION_TTL),
+    "cache-control": "no-store",
+  });
 }
 
 async function verifyTurnstile(env, token, ip) {
@@ -151,13 +159,72 @@ async function logLogin(env, email, ok, reason, ip, colo) {
   }
 }
 
+// ---------- Rider sessions (D1) ----------
+
+const SESSION_COOKIE = "__Host-dz_session";
+const SESSION_TTL = 8 * 60 * 60; // 8 hours
+
+async function createSession(env, email) {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  const token = [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+  const now = Math.floor(Date.now() / 1000);
+  await env.DB.batch([
+    env.DB.prepare("DELETE FROM sessions WHERE expires_at < ?").bind(now),
+    env.DB.prepare("INSERT INTO sessions (token_hash, email, expires_at) VALUES (?, ?, ?)")
+      .bind(await sha256Hex(token), email, now + SESSION_TTL),
+  ]);
+  return token;
+}
+
+function sessionCookie(token, maxAge) {
+  return `${SESSION_COOKIE}=${token}; Path=/; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Lax`;
+}
+
+function readSessionToken(request) {
+  const cookie = request.headers.get("cookie") || "";
+  const m = cookie.match(/(?:^|;\s*)__Host-dz_session=([0-9a-f]{64})(?:;|$)/);
+  return m ? m[1] : null;
+}
+
+// Returns { email, name } for a valid, unexpired session, otherwise null.
+async function getRider(request, env) {
+  const token = readSessionToken(request);
+  if (!token) return null;
+  return env.DB.prepare(
+    "SELECT r.email, r.name FROM sessions s JOIN riders r ON r.email = s.email WHERE s.token_hash = ? AND s.expires_at > ?"
+  ).bind(await sha256Hex(token), Math.floor(Date.now() / 1000)).first();
+}
+
+async function me(request, env) {
+  const noStore = { "cache-control": "no-store" };
+  const rider = await getRider(request, env);
+  if (!rider) return json({ signedIn: false }, 200, noStore);
+  const { results } = await env.DB.prepare(
+    "SELECT o.id, b.name AS bike_name, b.price_usd, o.city, o.created_at FROM orders o JOIN bikes b ON b.id = o.bike_id WHERE o.email = ? ORDER BY o.id DESC LIMIT 10"
+  ).bind(rider.email).all();
+  return json({ signedIn: true, rider, orders: results }, 200, noStore);
+}
+
+async function logout(request, env) {
+  const token = readSessionToken(request);
+  if (token) await env.DB.prepare("DELETE FROM sessions WHERE token_hash = ?").bind(await sha256Hex(token)).run();
+  return json({ ok: true }, 200, { "set-cookie": sessionCookie("", 0), "cache-control": "no-store" });
+}
+
+async function sha256Hex(s) {
+  const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 // ---------- Orders ----------
 
 async function createOrder(request, env, ctx, url) {
   const body = await readJson(request);
   if (!body) return json({ error: "bad_request" }, 400);
   const bikeId = String(body.bikeId || "");
-  const email = String(body.email || "").trim().toLowerCase();
+  // Signed-in riders order under their account; guests type an email.
+  const rider = await getRider(request, env);
+  const email = rider ? rider.email : String(body.email || "").trim().toLowerCase();
   if (!/^[a-z0-9-]{1,40}$/.test(bikeId) || !/^[^@\s]{1,64}@[^@\s]{1,190}$/.test(email))
     return json({ error: "invalid_order" }, 400);
 

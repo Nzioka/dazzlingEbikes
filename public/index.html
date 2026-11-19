@@ -37,7 +37,7 @@
   <section id="account" class="account">
     <div>
       <h2>Rider account</h2>
-      <p class="muted">Sign in to track orders and servicing. Demo rider: <code>demo@dazzling.bike</code> / <code>RideSafe-2026</code></p>
+      <p class="muted">Sign in to see your orders and check out without retyping your email. Demo rider: <code>demo@dazzling.bike</code> / <code>RideSafe-2026</code></p>
     </div>
     <form id="login" class="card">
       <label>Email <input name="email" type="email" autocomplete="username" required></label>
@@ -46,6 +46,12 @@
       <button class="btn" type="submit">Sign in</button>
       <p id="login-msg" class="msg" role="status"></p>
     </form>
+    <div id="me" class="card" hidden>
+      <p class="me-head"><b id="me-name"></b><span id="me-email" class="muted"></span></p>
+      <h3>Your orders</h3>
+      <ul id="me-orders" class="orders"></ul>
+      <button id="signout" class="btn" type="button">Sign out</button>
+    </div>
   </section>
 </main>
 

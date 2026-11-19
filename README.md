@@ -6,7 +6,7 @@ A working online store for the Dazzling E-Bikes presentation. There is no server
 |---|---|---|
 | Storefront (HTML, CSS, images) | Workers Static Assets | Served from the edge city closest to the viewer |
 | API: `/api/bikes`, `/api/login`, `/api/orders` | Workers | The application logic ("the origin") |
-| Bikes, riders, orders, login attempts | D1 | Serverless SQL database |
+| Bikes, riders, orders, sessions, login attempts | D1 | Serverless SQL database |
 | Catalogue caching | Cache API | `x-edge-cache: MISS` then `HIT` |
 | Login bot check | Turnstile | Scripts without a token get 403 from the Worker |
 | Injection attempts | WAF custom rule | 403 at the edge, the Worker never runs |
