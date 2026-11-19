@@ -203,8 +203,8 @@ async function admin(request, env) {
     `<tr><td colspan="${cols.length}">Nothing yet</td></tr>`;
 
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Dazzling Admin</title><link rel="stylesheet" href="/styles.css"></head><body class="admin">
-<header class="bar"><a class="brand" href="/">Dazzling<span>E-Bikes</span></a><span class="pill">Admin · signed in as ${esc(identity)}</span></header>
+<title>Dazzling Admin</title><link rel="icon" type="image/png" href="/img/icon.png"><link rel="stylesheet" href="/styles.css"></head><body class="admin">
+<header class="bar"><a class="brand" href="/"><img src="/img/logo.png" alt="Dazzling E-Bikes" width="95" height="48"></a><span class="pill">Admin · signed in as ${esc(identity)}</span></header>
 <main class="wrap">
 <h1>Operations</h1>
 <div class="kpis">
