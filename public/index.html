@@ -49,10 +49,29 @@
   </section>
 </main>
 
+<button id="assist-open" class="assist-fab" type="button" aria-controls="assist" aria-expanded="false">Ask the Rider Assistant</button>
+<section id="assist" class="assist" aria-label="Rider Assistant" hidden>
+  <header>
+    <b>Rider Assistant</b>
+    <span class="muted">Powered by Workers AI</span>
+    <button id="assist-close" type="button" aria-label="Close assistant">&times;</button>
+  </header>
+  <div id="assist-log" class="assist-log" role="log" aria-live="polite"></div>
+  <div class="assist-chips">
+    <button type="button" data-q="Which bike is best for a 15 km commute with hills?">Best bike for my commute?</button>
+    <button type="button" data-q="Which bike can carry groceries and kids?">Carry kids &amp; groceries</button>
+    <button type="button" data-q="How do I look after the battery?">Battery care</button>
+  </div>
+  <form id="assist-form">
+    <input id="assist-input" name="q" maxlength="500" autocomplete="off" placeholder="Ask about range, charging, which bike…" aria-label="Your question">
+    <button class="btn small" type="submit">Send</button>
+  </form>
+</section>
+
 <footer class="foot">
   <div class="wrap">
     <span id="edge" class="pill">Checking where you’re served from…</span>
-    <span class="muted">This store has no servers. It runs on Cloudflare Workers, D1 and Static Assets.</span>
+    <span class="muted">This store has no servers. It runs on Cloudflare Workers, D1, Static Assets and Workers AI.</span>
   </div>
 </footer>
 </body>

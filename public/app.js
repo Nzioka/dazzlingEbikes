@@ -94,6 +94,76 @@ async function showEdge() {
   }
 }
 
+function setupAssistant() {
+  const panel = $("#assist"), log = $("#assist-log"), form = $("#assist-form");
+  const input = $("#assist-input"), openBtn = $("#assist-open");
+  const history = [];
+  let busy = false;
+
+  const say = (cls, text) => {
+    const p = document.createElement("p");
+    p.className = "say " + cls;
+    p.textContent = text; // plain text only: model output is never inserted as HTML
+    log.appendChild(p);
+    log.scrollTop = log.scrollHeight;
+    return p;
+  };
+  const toggle = (open) => {
+    panel.hidden = !open;
+    openBtn.hidden = open;
+    openBtn.setAttribute("aria-expanded", String(open));
+    if (open) {
+      if (!log.childElementCount)
+        say("assistant", "Hi! I’m the Dazzling Rider Assistant. Ask me which bike suits your rides, how far they go on a charge, or how ordering works.");
+      input.focus();
+    } else {
+      openBtn.focus();
+    }
+  };
+
+  async function ask(q) {
+    q = q.trim();
+    if (!q || busy) return;
+    busy = true;
+    input.value = "";
+    say("user", q);
+    history.push({ role: "user", content: q });
+    const pending = say("assistant pending", "Thinking…");
+    try {
+      const r = await fetch("/api/assistant", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ messages: history.slice(-10) }),
+      });
+      const out = await r.json().catch(() => ({}));
+      if (r.ok && out.reply) {
+        pending.className = "say assistant";
+        pending.textContent = out.reply;
+        history.push({ role: "assistant", content: out.reply });
+      } else {
+        history.pop();
+        pending.className = "say assistant err";
+        pending.textContent = r.status === 429
+          ? "You’re asking faster than I can pedal. Give me a minute and try again."
+          : "Sorry, I couldn’t answer that just now. Please try again.";
+      }
+    } catch {
+      history.pop();
+      pending.className = "say assistant err";
+      pending.textContent = "Sorry, I couldn’t reach the assistant.";
+    }
+    busy = false;
+    input.focus();
+  }
+
+  openBtn.addEventListener("click", () => toggle(true));
+  $("#assist-close").addEventListener("click", () => toggle(false));
+  panel.addEventListener("keydown", (e) => { if (e.key === "Escape") toggle(false); });
+  panel.querySelectorAll("[data-q]").forEach((b) => b.addEventListener("click", () => ask(b.dataset.q)));
+  form.addEventListener("submit", (e) => { e.preventDefault(); ask(input.value); });
+}
+
 loadBikes();
 setupLogin();
 showEdge();
+setupAssistant();
