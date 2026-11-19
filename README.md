@@ -74,7 +74,7 @@ chmod +x demo/run-demo.sh
 ./demo/run-demo.sh https://shop.nzioka.dev
 ```
 
-The script pauses after each beat so you can talk. Expected output:
+The script pauses after each beat so you can talk. Beats 5 and 6 are best finished in the browser. Expected output:
 
 | Beat | You run | You should see | Where to show it |
 |---|---|---|---|
@@ -83,6 +83,8 @@ The script pauses after each beat so you can talk. Expected output:
 | 2 · Throttle | 12 logins with no Turnstile token | `403 bot_check_failed` ×5, then `429` | Security → Events (rate limit); then a normal browser login works |
 | 3 · Accelerate | `/api/bikes` twice | `x-edge-cache: MISS` with `server-timing: d1;dur=…`, then `HIT` | Terminal; the store footer shows the serving city |
 | 4 · Zero Trust | `/admin` | `302` to `…cloudflareaccess.com` | Browser: sign in with the PIN, the admin page lists the login attempts that reached the Worker |
+| 5 · Rider account | `/api/me` without and with a forged cookie | `{"signedIn":false}` both times | Browser: sign in as the demo rider, order a bike, it appears under "Your orders"; sign out |
+| 6 · AI assistant | Two questions to `/api/assistant` | A Cargo Max recommendation with live price and stock, then a refusal to invent a discount, plus `server-timing: ai;dur=…` | Browser: the "Ask the Rider Assistant" button; dashboard → AI → AI Gateway → default |
 
 **The admin page is the punchline for beat 2:** the 403s are listed because they reached the code; the 429s and the WAF block aren't there, because the edge stopped them before the code ever ran.
 
