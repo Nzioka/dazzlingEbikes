@@ -81,7 +81,7 @@ The script pauses after each beat so you can talk. Beats 5 and 6 are best finish
 | 0 | `/api/whoami` | `servedFrom: NBO`, origin is a Worker | Terminal |
 | 1 · Block | `?q=1 union select…` | `HTTP/2 403` and a `cf-ray` | Security → Events, search the Ray ID |
 | 2 · Throttle | 12 logins with no Turnstile token | `403 bot_check_failed` ×5, then `429` | Security → Events (rate limit); then a normal browser login works |
-| 3 · Accelerate | `/api/bikes` twice | `x-edge-cache: MISS` with `server-timing: d1;dur=…`, then `HIT` | Terminal; the store footer shows the serving city |
+| 3 · Accelerate | `/api/bikes` twice | `x-edge-cache: MISS` with `x-d1-served-by: EEUR (replica)` and `server-timing: d1;dur=…`, then `HIT` | Terminal; the store footer shows the serving city |
 | 4 · Zero Trust | `/admin` | `302` to `…cloudflareaccess.com` | Browser: sign in with the PIN, the admin page lists the login attempts that reached the Worker |
 | 5 · Rider account | `/api/me` without and with a forged cookie | `{"signedIn":false}` both times | Browser: sign in as the demo rider, order a bike, it appears under "Your orders"; sign out |
 | 6 · AI assistant | Two questions to `/api/assistant` | A Cargo Max recommendation with live price and stock, then a refusal to invent a discount, plus `server-timing: ai;dur=…` | Browser: the "Ask the Rider Assistant" button; dashboard → AI → AI Gateway → default |

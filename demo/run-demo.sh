@@ -29,11 +29,13 @@ echo "  Wait about 10 seconds, then sign in normally in the browser: real riders
 pause
 
 title "3 · ACCELERATE: the catalogue from the edge cache"
-for i in 1 2; do
-  curl -s -o /dev/null -D - "$B/api/bikes" | grep -iE "^x-edge-cache|^server-timing|^x-served-by"
+for i in 1 2 3; do
+  curl -s -o /dev/null -D - "$B/api/bikes" | grep -iE "^x-edge-cache|^x-d1-served-by|^server-timing|^x-served-by"
   echo "--"
 done
-echo "→ MISS reads D1; HIT comes from the cache in this Cloudflare city with no database call."
+echo "→ MISS reads D1, from the nearest read replica (x-d1-served-by). HIT comes from the cache"
+echo "  in this Cloudflare city with no database call at all. Each city keeps its own cache:"
+echo "  if x-served-by changes city, that city's first request is a MISS too."
 pause
 
 title "4 · ZERO TRUST: /admin is behind Cloudflare Access"
