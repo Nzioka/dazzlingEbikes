@@ -342,9 +342,17 @@ Rules:
 
   // 4. Repair manuals (R2 + Vectorize): find the manual sections closest to the
   //    question and give them to the model, so repair answers come from our docs.
+  //    Search with the latest question only, so an earlier topic in the chat does
+  //    not drown it out. A short follow-up ("and on the Trail Pro?") borrows the
+  //    previous question for context.
   const lastUser = messages[messages.length - 1].content;
-  const prevUser = messages.slice(0, -1).reverse().find((m) => m.role === "user");
-  const sections = await searchManuals(env, prevUser ? `${prevUser.content}\n${lastUser}` : lastUser);
+  const earlierUser = messages.slice(0, -1).filter((m) => m.role === "user").map((m) => m.content);
+  const prevUser = earlierUser[earlierUser.length - 1];
+  const isFollowUp = prevUser && lastUser.split(/\s+/).length <= 8;
+  const query = isFollowUp ? `${prevUser}\n${lastUser}` : lastUser;
+  //    The bike comes from this question, else from earlier in the chat.
+  const askedAbout = bikesNamed(lastUser).length ? bikesNamed(lastUser) : bikesNamed(earlierUser.join("\n"));
+  const sections = await searchManuals(env, query, askedAbout);
   const excerpts = sections.length
     ? sections.map((m, i) => `[${i + 1}] ${m.title}, section "${m.section}":\n${m.text}`).join("\n\n")
     : "(no matching manual sections)";
@@ -405,25 +413,29 @@ async function embed(env, texts) {
 }
 
 // If the rider names a bike, search only that bike's manual and the shared one.
+// [manual id, how riders refer to it, the full name to strip from the search text]
 const BIKE_NAMES = [
-  ["cargo-max", /cargo/i],
-  ["city-one", /city ?one/i],
-  ["trail-pro", /trail/i],
-  ["fold-go", /fold/i],
+  ["cargo-max", /cargo/i, /(dazzling\s+(e-bikes\s+)?)?cargo(\s*max)?/gi],
+  ["city-one", /city ?one/i, /(dazzling\s+(e-bikes\s+)?)?city\s*one/gi],
+  ["trail-pro", /trail/i, /(dazzling\s+(e-bikes\s+)?)?trail(\s*pro)?/gi],
+  ["fold-go", /fold/i, /(dazzling\s+(e-bikes\s+)?)?fold\s*(&|and|-|n)\s*go/gi],
 ];
+const bikesNamed = (text) => BIKE_NAMES.filter(([, re]) => re.test(text)).map(([id]) => id);
 
-async function searchManuals(env, question) {
+async function searchManuals(env, question, bikes = []) {
   if (!env.VECTORS || !env.AI) return [];
   try {
-    const [vector] = await embed(env, [question.slice(0, 1200)]);
-    const named = BIKE_NAMES.filter(([, re]) => re.test(question)).map(([id]) => id);
+    // The filter already picks the bike's manual, so drop bike names from the
+    // search text: otherwise "Fold & Go" pulls in the folding section for any question.
+    const text = BIKE_NAMES.reduce((t, [, , strip]) => t.replace(strip, "my bike"), question);
+    const [vector] = await embed(env, [text.slice(0, 1200)]);
     const options = { topK: 4, returnMetadata: "all" };
-    if (named.length) options.filter = { bike: { $in: [...named, "all"] } };
+    if (bikes.length) options.filter = { bike: { $in: [...bikes, "all"] } };
     const { matches } = await env.VECTORS.query(vector, options);
     // Keep strong matches only: above the floor and close to the best one.
     const best = matches && matches.length ? matches[0].score : 0;
     return (matches || [])
-      .filter((m) => m.metadata && m.score >= MIN_SCORE && m.score >= best - 0.05)
+      .filter((m) => m.metadata && m.score >= MIN_SCORE && m.score >= best - 0.1)
       .map((m) => ({ ...m.metadata, score: m.score }));
   } catch (err) {
     // The assistant still answers from the catalogue if search is unavailable.
