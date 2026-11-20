@@ -13,7 +13,7 @@ A working online store for the Dazzling E-Bikes presentation. There is no server
 | Credential stuffing | Rate limiting rule | 429 at the edge after the threshold |
 | `/admin` | Access (Zero Trust) | Identity check at the edge; the Worker also verifies the signed Access token |
 | Rider Assistant | Workers AI, AI Gateway | Answers grounded in the live catalogue, with logging and fallback |
-| Repair manuals | R2, Vectorize, Workers AI embeddings | The assistant answers repair questions from the official manuals and links to them |
+| Repair manuals | R2, Vectorize, Workers AI embeddings | The assistant answers repair questions from the official manuals |
 
 Demo rider: `demo@dazzling.bike` / `RideSafe-2026`
 
@@ -106,7 +106,7 @@ The manuals are Markdown files in `manuals/`, one section per `## ` heading. Edi
 npm run manuals:upload      # copies manuals/*.md to the R2 bucket
 ```
 
-Open `/admin` and press **Reindex manuals**. The Worker reads every file in the bucket, splits it into sections, embeds them with `@cf/baai/bge-m3` (multilingual, so Swahili or French questions match English manuals) and upserts them into Vectorize. When a question names a bike, the search is filtered to that bike's manual plus the shared drive system manual. Riders can read any manual at `/api/manuals/<file>.md`.
+Open `/admin` and press **Reindex manuals**. The Worker reads every file in the bucket, splits it into sections, embeds them with `@cf/baai/bge-m3` (multilingual, so Swahili or French questions match English manuals) and upserts them into Vectorize. When a question names a bike, the search is filtered to that bike's manual plus the shared drive system manual. The admin page links to each manual at `/api/manuals/<file>.md`.
 
 ## Run locally
 

@@ -186,22 +186,6 @@ function setupAssistant() {
         pending.className = "say assistant";
         pending.textContent = out.reply;
         history.push({ role: "assistant", content: out.reply });
-        if (Array.isArray(out.sources) && out.sources.length) {
-          const src = document.createElement("p");
-          src.className = "say sources";
-          src.append("From the manuals: ");
-          out.sources.forEach((m, i) => {
-            const link = document.createElement("a");
-            link.href = m.url;
-            link.target = "_blank";
-            link.rel = "noopener";
-            link.textContent = `${m.title.replace(/^Dazzling E-Bikes /, "")} · ${m.section}`;
-            if (i) src.append(", ");
-            src.append(link);
-          });
-          log.appendChild(src);
-          log.scrollTop = log.scrollHeight;
-        }
       } else {
         history.pop();
         pending.className = "say assistant err";

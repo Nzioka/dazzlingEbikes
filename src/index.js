@@ -374,12 +374,7 @@ Repair rules:
       const out = await env.AI.run(model, input, gateway);
       const reply = String((out && (out.response ?? out.choices?.[0]?.message?.content)) || "").trim();
       if (reply) {
-        // Cite each manual once, with a link to read it in full.
-        const seen = new Set();
-        const sources = sections
-          .filter((m) => !seen.has(m.source) && seen.add(m.source))
-          .map((m) => ({ title: m.title, section: m.section, url: `/api/manuals/${m.source}` }));
-        return json({ reply, sources }, 200, {
+        return json({ reply }, 200, {
           "cache-control": "no-store",
           "server-timing": `ai;dur=${Date.now() - t0}`,
           "x-ai-model": model,
