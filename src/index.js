@@ -392,13 +392,18 @@ async function admin(request, env) {
     ).first(),
   ]);
 
+  // Access sign-out: clears the Access cookie and ends the Access session, then returns to the store.
+  const signOut = allowDev
+    ? ""
+    : `<a class="btn small" href="/cdn-cgi/access/logout?returnTo=${encodeURIComponent(new URL("/", request.url).toString())}">Sign out</a>`;
+
   const rows = (list, cols) =>
     list.results.map((r) => `<tr>${cols.map((c) => `<td>${esc(r[c])}</td>`).join("")}</tr>`).join("") ||
     `<tr><td colspan="${cols.length}">Nothing yet</td></tr>`;
 
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Dazzling E-Bikes Admin</title><link rel="icon" type="image/png" href="/img/icon.png"><link rel="stylesheet" href="/styles.css"></head><body class="admin">
-<header class="bar"><a class="brand" href="/"><img src="/img/logo.png" alt="Dazzling E-Bikes" width="95" height="48"></a><span class="pill">Admin · signed in as ${esc(identity)}</span></header>
+<header class="bar"><a class="brand" href="/"><img src="/img/logo.png" alt="Dazzling E-Bikes" width="95" height="48"></a><div class="admin-user"><span class="pill">Admin · signed in as ${esc(identity)}</span>${signOut}</div></header>
 <main class="wrap">
 <h1>Operations</h1>
 <div class="kpis">
