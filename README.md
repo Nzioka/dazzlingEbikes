@@ -40,7 +40,7 @@ Check it: `curl https://shop.nzioka.dev/api/whoami` should show `"servedFrom": "
 
 ## Configure the edge (dashboard, zone nzioka.dev)
 
-**Before you start:** delete or disable the old `BlockLogin` custom rule from the lab. Custom rules run before rate limiting, so it would turn the 429s into 403s. Turn **Bot Fight Mode off** for the demo too: it can challenge curl and make the output unpredictable.
+**Before you start:** turn **Bot Fight Mode off** for the demo: it can challenge curl and make the output unpredictable.
 
 **1. WAF custom rule** · Security → WAF → Custom rules → Create
 
