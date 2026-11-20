@@ -8,6 +8,8 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "db:migrate": "wrangler d1 migrations apply dazzling-shop --remote",
-    "db:migrate:local": "wrangler d1 migrations apply dazzling-shop --local"
+    "db:migrate:local": "wrangler d1 migrations apply dazzling-shop --local",
+    "manuals:upload": "for f in manuals/*.md; do wrangler r2 object put \"dazzling-manuals/$(basename $f)\" --file \"$f\" --content-type 'text/markdown; charset=utf-8' --remote; done",
+    "manuals:upload:local": "for f in manuals/*.md; do wrangler r2 object put \"dazzling-manuals/$(basename $f)\" --file \"$f\" --content-type 'text/markdown; charset=utf-8' --local; done"
   }
 }

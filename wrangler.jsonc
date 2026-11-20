@@ -31,6 +31,11 @@
   // Workers AI powers the Rider Assistant (/api/assistant). No API keys needed.
   "ai": { "binding": "AI" },
 
+  // Repair manuals: the Markdown files live in R2, their embeddings in Vectorize.
+  // Admin → "Reindex manuals" rebuilds the index from whatever is in the bucket.
+  "r2_buckets": [{ "binding": "MANUALS", "bucket_name": "dazzling-manuals", "remote": true }],
+  "vectorize": [{ "binding": "VECTORS", "index_name": "dazzling-manuals", "remote": true }],
+
   // Per-IP limit on assistant questions, so nobody can run up the AI bill.
   "ratelimits": [
     { "name": "ASSISTANT_LIMITER", "namespace_id": "2001", "simple": { "limit": 10, "period": 60 } }
