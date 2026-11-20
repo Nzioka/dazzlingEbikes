@@ -42,8 +42,8 @@
     // Turnstile test site key (always passes). Replace with your own for the real demo.
     "TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
     // Your Zero Trust team domain and the Access application AUD tag, for /admin.
-    "ACCESS_TEAM_DOMAIN": "",
-    "ACCESS_AUD": ""
+    "ACCESS_TEAM_DOMAIN": "nzioka.cloudflareaccess.com",
+    "ACCESS_AUD": "b405d4b55bb366c795223d6db8bd98d7287a6f88611d52e3506827f901a7e081"
   }
   // Secret, set with: npx wrangler secret put TURNSTILE_SECRET
 }
