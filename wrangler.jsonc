@@ -7,6 +7,10 @@
   "compatibility_date": "2026-11-01",
   "observability": { "enabled": true },
 
+  // Smart Placement: Cloudflare may run the Worker code near the database when that
+  // is faster. Static assets are still served from the city closest to the visitor.
+  "placement": { "mode": "smart" },
+
   // Storefront HTML, CSS, JS and images are served straight from the edge.
   // Anything that is not a file (/api/*, /admin) runs the Worker.
   "assets": { "directory": "./public", "binding": "ASSETS", "not_found_handling": "none" },
