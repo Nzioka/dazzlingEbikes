@@ -156,7 +156,7 @@ function setupAssistant() {
     openBtn.setAttribute("aria-expanded", String(open));
     if (open) {
       if (!log.childElementCount)
-        say("assistant", "Hi! I’m the Dazzling Rider Assistant. Ask me which bike suits your rides, how far they go on a charge, or how ordering works.");
+        say("assistant", "Hi! I’m the Dazzling E-Bikes Rider Assistant. Ask me which bike suits your rides, how far they go on a charge, or how ordering works.");
       input.focus();
     } else {
       openBtn.focus();

@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS login_events (
 );
 
 INSERT OR REPLACE INTO bikes VALUES
-  ('city-one',    'Dazzling City One',    'The everyday commuter, built for traffic and hills', 80,  1490, 42, '/img/city-one.svg'),
-  ('cargo-max',   'Dazzling Cargo Max',   'Deliveries, groceries and school runs',              110, 2690, 15, '/img/cargo-max.svg'),
-  ('trail-pro',   'Dazzling Trail Pro',   'Full suspension for gravel and red-dirt roads',      95,  3290,  8, '/img/trail-pro.svg'),
-  ('fold-go',     'Dazzling Fold & Go',   'Folds in ten seconds for the train and the office',  60,  1190, 31, '/img/fold-go.svg');
+  ('city-one',    'Dazzling E-Bikes City One', 'The everyday commuter, built for traffic and hills', 80,  1490, 42, '/img/city-one.svg'),
+  ('cargo-max',   'Dazzling E-Bikes Cargo Max', 'Deliveries, groceries and school runs',              110, 2690, 15, '/img/cargo-max.svg'),
+  ('trail-pro',   'Dazzling E-Bikes Trail Pro', 'Full suspension for gravel and red-dirt roads',      95,  3290,  8, '/img/trail-pro.svg'),
+  ('fold-go',     'Dazzling E-Bikes Fold & Go', 'Folds in ten seconds for the train and the office',  60,  1190, 31, '/img/fold-go.svg');

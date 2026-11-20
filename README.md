@@ -99,7 +99,7 @@ npx wrangler dev
 
 Locally, Turnstile verification is skipped when `TURNSTILE_SECRET` isn't set (any non-empty token passes), and `/admin` is open because of `DEV_ALLOW_ADMIN`. Never set `DEV_ALLOW_ADMIN` in production.
 
-## Free plan vs what you'd sell Dazzling
+## Free plan vs what you'd sell Dazzling E-Bikes
 
 The demo uses free-plan features so it runs on your own account. In the pitch, map each one to the Enterprise feature:
 
