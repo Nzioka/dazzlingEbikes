@@ -25,7 +25,7 @@ for i in $(seq 1 12); do
   printf "attempt %2d → %s %s\n" "$i" "$code" "$(head -c 60 /tmp/login.out | tr -d '\n' | grep -o '"error": *"[a-z_]*"' || echo 'rate limited at the edge')"
 done
 echo "→ First the Worker rejects them (no Turnstile proof = 403), then the edge rate limit returns 429."
-echo "  Wait about 10 seconds, then sign in normally in the browser: real riders still get in."
+echo "  Wait about 10 seconds, then sign in normally at $B/account: real riders still get in."
 pause
 
 title "3 · ACCELERATE: the catalogue from the edge cache"
@@ -49,7 +49,7 @@ curl -s "$B/api/me" | tr -d '\n '; echo
 echo "\$ curl $B/api/me -H 'cookie: <forged session>'"
 curl -s "$B/api/me" -H "cookie: __Host-dz_session=$(printf '%064d' 0)" | tr -d '\n '; echo
 echo "→ Not signed in, and a made-up session is rejected."
-echo "  Now in the browser: sign in as demo@dazzling.bike / RideSafe-2026, order a bike,"
+echo "  Now open $B/account, sign in as demo@dazzling.bike / RideSafe-2026, order a bike,"
 echo "  and it appears under \"Your orders\". Sign out deletes the session in D1."
 pause
 

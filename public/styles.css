@@ -74,3 +74,8 @@ th { background: #f3f2ec; }
 .assist form { display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--line); }
 .assist input { flex: 1; min-width: 0; }
 @media (max-width: 760px) { .assist, .assist-fab { right: 16px; bottom: 16px; } .account { grid-template-columns: 1fr; } nav a { margin-left: 12px; } .kpis { grid-template-columns: 1fr; } }
+
+/* Rider account page */
+.account.page { min-height: 60vh; }
+.account.page h1 { margin: 56px 0 8px; font-size: 32px; }
+nav a[aria-current="page"] { color: var(--ink); }

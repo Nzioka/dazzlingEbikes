@@ -50,7 +50,7 @@ async function order(bike) {
   });
   const out = await r.json().catch(() => ({}));
   alert(r.ok
-    ? `Order #${out.orderId} confirmed.${account ? " You'll find it under Rider account." : ""}`
+    ? `Order #${out.orderId} confirmed.${account ? " You'll find it on your Rider account page." : ""}`
     : `Order failed: ${out.error || r.status}`);
   loadBikes();
   if (account) loadAccount();
@@ -67,6 +67,10 @@ async function loadAccount() {
 }
 
 function renderAccount() {
+  // Nav link on every page: shows who is signed in.
+  const nav = $("#nav-account");
+  if (nav) nav.textContent = account ? `Hi, ${account.rider.name.split(" ")[0]}` : "Rider account";
+  if (!$("#login")) return; // only the account page has the form and order list
   $("#login").hidden = !!account;
   $("#me").hidden = !account;
   if (!account) return;
@@ -75,7 +79,7 @@ function renderAccount() {
   const list = $("#me-orders");
   list.innerHTML = "";
   if (!account.orders.length) {
-    list.innerHTML = `<li class="muted">No orders yet. Pick a bike from the range above.</li>`;
+    list.innerHTML = `<li class="muted">No orders yet. <a href="/#bikes">Pick a bike from the range</a>.</li>`;
   }
   for (const o of account.orders) {
     const li = document.createElement("li");
@@ -205,14 +209,15 @@ function setupAssistant() {
   form.addEventListener("submit", (e) => { e.preventDefault(); ask(input.value); });
 }
 
-$("#signout").addEventListener("click", async () => {
+// Each page sets up only the parts it has.
+if ($("#signout")) $("#signout").addEventListener("click", async () => {
   await fetch("/api/logout", { method: "POST" }).catch(() => {});
   account = null;
   renderAccount();
 });
 
-loadBikes();
+if ($("#grid")) loadBikes();
 loadAccount();
-setupLogin();
+if ($("#login")) setupLogin();
 showEdge();
 setupAssistant();

@@ -6,7 +6,6 @@
 <title>Dazzling E-Bikes · Ride further</title>
 <link rel="icon" type="image/png" href="/img/icon.png">
 <link rel="stylesheet" href="/styles.css">
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
 <script src="/app.js" defer></script>
 </head>
 <body>
@@ -14,7 +13,7 @@
   <a class="brand" href="/"><img src="/img/logo.png" alt="Dazzling E-Bikes" width="95" height="48"></a>
   <nav>
     <a href="#bikes">Bikes</a>
-    <a href="#account">Rider account</a>
+    <a id="nav-account" href="/account">Rider account</a>
     <a href="/admin">Admin</a>
   </nav>
 </header>
@@ -34,25 +33,6 @@
     <div id="grid" class="grid"><p class="muted">Loading bikes…</p></div>
   </section>
 
-  <section id="account" class="account">
-    <div>
-      <h2>Rider account</h2>
-      <p class="muted">Sign in to see your orders and check out without retyping your email. Demo rider: <code>demo@dazzling.bike</code> / <code>RideSafe-2026</code></p>
-    </div>
-    <form id="login" class="card">
-      <label>Email <input name="email" type="email" autocomplete="username" required></label>
-      <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
-      <div id="turnstile"></div>
-      <button class="btn" type="submit">Sign in</button>
-      <p id="login-msg" class="msg" role="status"></p>
-    </form>
-    <div id="me" class="card" hidden>
-      <p class="me-head"><b id="me-name"></b><span id="me-email" class="muted"></span></p>
-      <h3>Your orders</h3>
-      <ul id="me-orders" class="orders"></ul>
-      <button id="signout" class="btn" type="button">Sign out</button>
-    </div>
-  </section>
 </main>
 
 <button id="assist-open" class="assist-fab" type="button" aria-controls="assist" aria-expanded="false">Ask the Rider Assistant</button>
