@@ -8,7 +8,7 @@ A working online store for the Dazzling E-Bikes presentation. There is no server
 | API: `/api/bikes`, `/api/login`, `/api/orders` | Workers | The application logic ("the origin") |
 | Bikes, riders, orders, sessions, login attempts | D1 | Serverless SQL database |
 | Catalogue caching | Cache API | `x-edge-cache: MISS` then `HIT` |
-| Login bot check | Turnstile | Scripts without a token get 403 from the Worker |
+| Login bot check | Turnstile | Scripts without a token, or with a forged one, get 403 from the Worker (checked with Siteverify) |
 | Injection attempts | WAF custom rule | 403 at the edge, the Worker never runs |
 | Credential stuffing | Rate limiting rule | 429 at the edge after the threshold |
 | `/admin` | Access (Zero Trust) | Identity check at the edge; the Worker also verifies the signed Access token |
@@ -30,9 +30,13 @@ npx wrangler d1 create dazzling-shop
 #    → copy the database_id into wrangler.jsonc
 npx wrangler d1 migrations apply dazzling-shop --remote
 
-# 2. Turnstile: Dashboard → Turnstile → Add widget → hostname shop.nzioka.dev, mode Managed
-#    → put the site key in wrangler.jsonc (TURNSTILE_SITE_KEY), then:
-npx wrangler secret put TURNSTILE_SECRET
+# 2. Turnstile widget (Managed mode). Prints only the public site key:
+cf turnstile widgets create --name "Dazzling E-Bikes shop" --domains shop.nzioka.dev \
+  --widget-mode managed --clearance-level no_clearance | grep '"sitekey"'
+#    → put the site key in wrangler.jsonc (TURNSTILE_SITE_KEY). After the first deploy,
+#    rotate the secret and pipe it straight into the Worker, so it is never printed:
+cf turnstile widgets rotate-secret <sitekey> | python3 -c 'import sys,re; print(re.search(r"\"secret\"\s*:\s*\"([^\"]+)",sys.stdin.read()).group(1))' \
+  | npx wrangler secret put TURNSTILE_SECRET
 
 # 3. Repair manuals: a bucket for the files and a vector index for search
 npx wrangler r2 bucket create dazzling-manuals
@@ -113,13 +117,13 @@ Open `/admin` and press **Reindex manuals**. The Worker reads every file in the 
 ```bash
 npm install
 npx wrangler d1 migrations apply dazzling-shop --local
-echo 'DEV_ALLOW_ADMIN="true"' > .dev.vars
+printf 'DEV_ALLOW_ADMIN="true"\nTURNSTILE_SITE_KEY="1x00000000000000000000AA"\n' > .dev.vars
 npx wrangler dev
 ```
 
 The R2 bucket and the Vectorize index are marked `"remote": true`, so local development uses the real manuals and index (Vectorize has no local simulator).
 
-Locally, Turnstile verification is skipped when `TURNSTILE_SECRET` isn't set (any non-empty token passes), and `/admin` is open because of `DEV_ALLOW_ADMIN`. Never set `DEV_ALLOW_ADMIN` in production.
+Locally, the Turnstile test key replaces the real one (which only works on shop.nzioka.dev), and verification is skipped because `TURNSTILE_SECRET` isn't set (any non-empty token passes), and `/admin` is open because of `DEV_ALLOW_ADMIN`. Never set `DEV_ALLOW_ADMIN` in production.
 
 ## Free plan vs what you'd sell Dazzling E-Bikes
 
