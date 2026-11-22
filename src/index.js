@@ -406,7 +406,9 @@ const EMBED_MODEL = "@cf/baai/bge-m3"; // multilingual, 1024 dimensions
 const MIN_SCORE = 0.5; // ignore weak matches so small talk does not pull in manuals
 
 async function embed(env, texts) {
-  const out = await env.AI.run(EMBED_MODEL, { text: texts });
+  // Through AI Gateway too, so manual searches and reindexing show up in its logs.
+  const gateway = env.AI_GATEWAY_ID ? { gateway: { id: env.AI_GATEWAY_ID } } : undefined;
+  const out = await env.AI.run(EMBED_MODEL, { text: texts }, gateway);
   const vectors = out && (out.data || out.response);
   if (!Array.isArray(vectors) || vectors.length !== texts.length) throw new Error("embedding_failed");
   return vectors;
