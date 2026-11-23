@@ -20,11 +20,24 @@ Browser demo. Tabs: **Store** (DevTools Network open), **Account**, **Admin** (p
 
 ## Act 1 · The store
 
+Each step lists what to show, then **Under the hood**: the technology behind it. Pick the points that suit the audience. You won't have time for all of them in 3.5 minutes.
+
 **1 · BUILD (1 min, Worker dashboard)**
 
 - **Bindings:** the code is connected to Static Assets and D1 by configuration, with no keys.
 - **Deployments:** every push is a version, and rollback is one click.
 - **Store footer:** "Served from Cloudflare BUD" (or whichever city appears). Name the city that shows up. Don't promise NBO, because your internet provider's routing decides the city.
+
+Under the hood:
+
+- **Workers:** the whole back end is one Worker, `src/index.js`. It's plain JavaScript with no framework and no build step, and it handles every `/api/*` route and `/admin`. It runs on the same runtime in every Cloudflare city.
+- **Static Assets:** the storefront (`public/`: HTML, CSS, JavaScript, images) is uploaded with the Worker and served straight from the edge, before any code runs. `public/_headers` sets the caching: images for a day, CSS and JavaScript revalidated on every load so a deploy shows up at once. `/account` is served as a clean URL from `account.html`.
+- **Configuration as code:** `wrangler.jsonc` declares everything the Worker uses. The bindings are D1 (`DB`), Static Assets (`ASSETS`), R2 (`MANUALS`), Vectorize (`VECTORS`), Workers AI (`AI`) and a rate limiter (`ASSISTANT_LIMITER`). The platform injects them at runtime, so there are no connection strings or API keys in the code. The one secret, the Turnstile key, is stored as an encrypted Worker secret.
+- **Workers Builds:** the GitHub repository is connected to the Worker. A push to `main` builds and deploys worldwide in about a minute, and each deploy is a version you can roll back to.
+- **Smart Placement:** Cloudflare can run the code near the database when that's faster, while the static files still come from the city closest to the shopper.
+- **Observability:** logs and traces are on for every request, with no agent to install.
+- **Domain:** `nzioka.dev` is registered with Cloudflare Registrar. `shop.nzioka.dev` is a Workers custom domain: Cloudflare created the DNS record and issued the TLS certificate automatically.
+- **The footer city:** the Worker reads it from the request (`request.cf.colo`, along with the visitor's city and the HTTP version) at `/api/whoami`.
 
 SAY: "Even the domain is Cloudflare: bought, DNS and certificate in one place."
 
@@ -36,6 +49,15 @@ SAY: "Even the domain is Cloudflare: bought, DNS and certificate in one place."
 
 If you see MISS twice, your request moved to another Cloudflare city (check `x-served-by`). Refresh once more.
 
+Under the hood:
+
+- **Cache API:** the Worker stores the catalogue response in the Cloudflare cache of the city that served it, for 60 seconds (`s-maxage=60`). A HIT returns straight from that cache with no database call. When someone orders, the Worker deletes the cached catalogue so the new stock shows up.
+- **D1:** Cloudflare's serverless SQL database (SQLite), holding the bikes, riders, sessions, orders and login attempts. The schema and seed data are SQL migration files in `migrations/`, applied with Wrangler. The primary copy is in Western Europe.
+- **D1 read replication:** read-only copies of the database in other regions. Each read goes to the nearest replica, which `x-d1-served-by` reports, for example `EEUR (replica)` for Eastern Europe.
+- **D1 Sessions API:** every request runs in a database session. A bookmark cookie remembers the latest database version each browser has seen, so a rider always reads their own writes, even from a replica.
+- **Timing headers:** `server-timing` reports the database time (`d1;dur`) and the total Worker time (`worker;dur`). `x-served-by` names the Cloudflare city that ran the code.
+- **The network:** HTTP/3 and TLS 1.3 are terminated at the edge, with no configuration.
+
 SAY: "No CDN or database cluster to run."
 
 **3 · TRANSACT (1.5 min, Account + Admin + Email)**
@@ -43,6 +65,16 @@ SAY: "No CDN or database cluster to run."
 - On the Account tab, sign in as `demo@dazzling.bike` / `RideSafe-2026`, past Turnstile.
 - Order a bike. It shows in **Your orders** at once.
 - Open Admin in the private window. Access asks for sign-in, and you enter the PIN from Email. The order is in **Latest orders**.
+
+Under the hood:
+
+- **Turnstile:** the sign-in form shows a Turnstile widget in Managed mode, which usually passes without a puzzle. The Worker sends the token to Cloudflare's Siteverify API with the widget secret, so a missing or forged token gets a 403 even with the right password.
+- **Passwords:** stored in D1 as salted PBKDF2-SHA-256 hashes (100,000 iterations), checked with the Web Crypto API that's built into Workers. The comparison takes the same time whether or not the password matches.
+- **Sessions:** on sign-in, the Worker creates a random 256-bit token. Only its SHA-256 hash is stored in D1, with an 8-hour expiry. The browser gets it in a `__Host-` cookie that is HttpOnly, Secure and SameSite=Lax, so scripts can't read it. Signing out deletes the row in D1.
+- **Every login attempt** is recorded in D1, with the outcome, the visitor's IP address and the Cloudflare city. That's what the admin page lists.
+- **Orders:** a single SQL statement decrements the stock only if any is left, so two riders can't buy the last bike. The order row records the shopper's city and the Cloudflare city that served it. The order shows at once because of the bookmark cookie from step 2.
+- **Cloudflare Access (Zero Trust):** `/admin` is an Access application. Cloudflare checks identity with a one-time PIN by email before the request reaches the Worker. The Worker then verifies the signed Access token itself (an RS256 JWT checked against your team's public keys and the app's audience tag), so a misconfigured route still fails closed.
+- **Admin reads:** the admin page reads from the primary database, not a replica, so operations data is always the latest. The Access sign-out button ends the session at Cloudflare.
 
 ## Act 2 · The assistant, on the same data
 
@@ -150,6 +182,8 @@ Reload the page: now it's `x-edge-cache: HIT`, and the note under the bikes says
 
 If you see MISS twice, your request moved to another Cloudflare city (check `x-served-by`), and each city has its own cache. Reload once more. The city can differ from Nairobi because of how your internet provider routes traffic, so don't promise NBO.
 
+Under the hood: Workers, Static Assets, the Cache API, D1 read replication and the Sessions API. See run sheet steps 1 (BUILD) and 2 (ACCELERATE) for the details.
+
 *Backup: terminal beats 0 and 3.*
 
 ### 2 · Rider accounts: sessions and orders in D1
@@ -164,6 +198,8 @@ Stay signed in. You'll use this order again in Acts 2 and 3.
 
 **Proof:** the order appears instantly, even though reads come from a replica.
 
+Under the hood: Turnstile with Siteverify, PBKDF2 password hashes, hashed session tokens in D1, `__Host-` cookies and an atomic stock update. See run sheet step 3 (TRANSACT).
+
 *Backup: terminal beat 5.*
 
 ### 3 · Ship from git
@@ -173,6 +209,8 @@ Stay signed in. You'll use this order again in Acts 2 and 3.
 **Say:** "There's no deployment pipeline to run. A push to the main branch builds and deploys this store worldwide in about a minute, and every version stays listed here, so rolling back is one click."
 
 **Proof:** commit messages that match the features you've just seen, for example *"Add agent tracing for the Rider Assistant"*.
+
+Under the hood: Workers Builds connected to the GitHub repository, configuration in `wrangler.jsonc`, and Smart Placement. See run sheet step 1 (BUILD).
 
 ## Act 2 · AI: an assistant that knows the store
 
