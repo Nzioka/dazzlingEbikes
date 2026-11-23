@@ -1,6 +1,7 @@
 {
   // Dazzling E-Bikes demo store: runs entirely on Cloudflare.
-  // Workers (code) + Static Assets (storefront) + D1 (data) + Turnstile (bot check) + Access (/admin).
+  // Workers (code) + Static Assets (storefront) + D1 (data) + R2 and Vectorize (repair manuals)
+  // + Workers AI and AI Gateway (assistant) + Turnstile (bot check) + Access (/admin).
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "dazzling-shop",
   "main": "src/index.js",
