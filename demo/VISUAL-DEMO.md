@@ -31,7 +31,7 @@ Demo rider: `demo@dazzling.bike` / `RideSafe-2026`.
 **1 · BUILD (1 min, Worker dashboard)**
 
 - **Show:** Settings → Bindings, then Deployments, then the store footer ("Served from …").
-- **Say:** "One Worker, no servers. Static Assets and D1 are connected by config, with no keys. Every git push is a version, and rollback is one click. Even the domain is Cloudflare: bought, DNS and certificate in one place."
+- **Say:** "Workers, no servers. Static Assets and D1 are connected by config, with no keys. Every git push is a version, and rollback is one click. Even the domain is Cloudflare: bought, DNS and certificate in one place."
 - **Tech:** Workers · Static Assets · Workers Builds · Registrar
 
 Name the city the footer shows. Don't promise NBO, because your internet provider's routing decides the city.
