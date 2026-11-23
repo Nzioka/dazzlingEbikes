@@ -68,6 +68,7 @@ Reindexing is safe live as long as the manuals haven't changed.
   Then click the **assistant** request in DevTools and point at `x-manual-matches`.
 - **Say:** "Live price and stock from the database, repairs from your manuals, in any language, and it can't be talked into discounts."
 - **Ask the room:** "Give me a question it must never get wrong."
+- **Say (guardrails):** "It only quotes live prices and stock from D1. It never invents discounts. Repairs come only from your manuals, and if they don't cover it, it sends you to the workshop. And every call is in AI Gateway."
 
 **6 · CONTROL (1 min, AI Gateway)**
 
