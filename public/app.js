@@ -144,6 +144,8 @@ function setupAssistant() {
   const panel = $("#assist"), log = $("#assist-log"), form = $("#assist-form");
   const input = $("#assist-input"), openBtn = $("#assist-open");
   const history = [];
+  // Random per chat window, only used to group a conversation's turns in traces.
+  const conversationId = crypto.randomUUID ? crypto.randomUUID() : undefined;
   let busy = false;
 
   const say = (cls, text) => {
@@ -179,7 +181,7 @@ function setupAssistant() {
       const r = await fetch("/api/assistant", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ messages: history.slice(-10) }),
+        body: JSON.stringify({ messages: history.slice(-10), conversationId }),
       });
       const out = await r.json().catch(() => ({}));
       if (r.ok && out.reply) {

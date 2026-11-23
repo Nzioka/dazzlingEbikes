@@ -112,6 +112,16 @@ npm run manuals:upload      # copies manuals/*.md to the R2 bucket
 
 Open `/admin` and press **Reindex manuals**. The Worker reads every file in the bucket, splits it into sections, embeds them with `@cf/baai/bge-m3` (multilingual, so Swahili or French questions match English manuals) and upserts them into Vectorize. When a question names a bike, the search is filtered to that bike's manual plus the shared drive system manual. The admin page links to each manual at `/api/manuals/<file>.md`.
 
+## Agent tracing
+
+Workers tracing is on for every request (`observability.traces` in `wrangler.jsonc`). Each Rider Assistant question is traced as an agent turn, following the OpenTelemetry GenAI conventions:
+
+- `invoke_agent rider-assistant`: the whole turn
+  - `execute_tool search_manuals`: the manual search (the embedding and the Vectorize query are nested inside it)
+  - `chat <model>`: one span per model attempt, so a fallback shows as a failed Gemma span followed by a Llama span
+
+The spans carry the agent name, the agent ID and a random per-chat conversation ID, plus models, token counts, manual hit counts and errors. They are **metadata only**: no rider messages, answers, system prompt or manual text is stored. Open dashboard → **Workers & Pages → dazzling-shop → Observability**, or the Agents view, after asking the assistant a question.
+
 ## Run locally
 
 ```bash

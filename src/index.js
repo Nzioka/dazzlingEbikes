@@ -3,6 +3,8 @@
 // Edge security (WAF custom rules, rate limiting, Access) runs BEFORE this code,
 // so anything blocked there never reaches it.
 
+import { tracing } from "cloudflare:workers";
+
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
 const BOOKMARK_COOKIE = "__Host-dz_bm";
 
@@ -286,6 +288,14 @@ const ASSISTANT_MODELS = ["@cf/google/gemma-4-26b-a4b-it", "@cf/meta/llama-3.1-8
 const MAX_TURNS = 10;
 const MAX_CHARS = 600;
 
+// Agent tracing (Workers custom spans, OpenTelemetry GenAI conventions).
+// One invoke_agent span per question, with execute_tool (manual search) and
+// chat (each model attempt) spans inside it. Metadata only: no message text,
+// system prompt or manual content is recorded.
+const AGENT_NAME = "rider-assistant";
+const AGENT_ID = "dazzling-shop/rider-assistant";
+const AI_PROVIDER = "cloudflare.workers_ai";
+
 async function assistant(request, env) {
   if (!env.AI) return json({ error: "assistant_unavailable" }, 503);
 
@@ -309,6 +319,38 @@ async function assistant(request, env) {
   if (!messages.length || messages[messages.length - 1].role !== "user")
     return json({ error: "bad_request" }, 400);
 
+  // The browser sends a random ID per chat window. It is not linked to the rider's
+  // account; if it is missing or malformed, the turn gets a fresh one.
+  const cid = String(body.conversationId || "");
+  const conversationId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(cid) ? cid : crypto.randomUUID();
+  const identity = {
+    "gen_ai.agent.name": AGENT_NAME,
+    "gen_ai.agent.id": AGENT_ID,
+    "gen_ai.conversation.id": conversationId,
+  };
+
+  return tracing.enterSpan(`invoke_agent ${AGENT_NAME}`, async (span) => {
+    span.setAttributes({
+      "gen_ai.operation.name": "invoke_agent",
+      "gen_ai.provider.name": AI_PROVIDER,
+      ...identity,
+      "dazzling.assistant.message_count": messages.length,
+    });
+    const res = await assistantTurn(env, messages, identity);
+    span.setAttribute("http.response.status_code", res.status);
+    if (res.ok) {
+      span.setAttribute("gen_ai.response.model", res.headers.get("x-ai-model") || undefined);
+      span.setStatus({ code: "ok" });
+    } else {
+      span.setAttribute("error.type", "all_models_failed");
+      span.setStatus({ code: "error", message: "No model returned an answer" });
+    }
+    return res;
+  });
+}
+
+// One assistant turn: catalogue, manual search, then the models in order.
+async function assistantTurn(env, messages, identity) {
   // 3. Ground the answer in the live catalogue, so prices and stock are always current.
   const { results: bikes } = await env.DB.prepare(
     "SELECT id, name, tagline, range_km, price_usd, stock FROM bikes ORDER BY price_usd"
@@ -352,7 +394,23 @@ Rules:
   const query = isFollowUp ? `${prevUser}\n${lastUser}` : lastUser;
   //    The bike comes from this question, else from earlier in the chat.
   const askedAbout = bikesNamed(lastUser).length ? bikesNamed(lastUser) : bikesNamed(earlierUser.join("\n"));
-  const sections = await searchManuals(env, query, askedAbout);
+  const sections = await tracing.enterSpan("execute_tool search_manuals", async (span) => {
+    span.setAttributes({
+      "gen_ai.operation.name": "execute_tool",
+      "gen_ai.tool.name": "search_manuals",
+      "gen_ai.tool.type": "datastore",
+      "gen_ai.tool.description": "Vector search over the repair manuals (R2 + Vectorize)",
+      ...identity,
+      "dazzling.manuals.bike_filter": askedAbout.length > 0,
+      "dazzling.manuals.follow_up": !!isFollowUp,
+    });
+    const found = await searchManuals(env, query, askedAbout);
+    span.setAttributes({
+      "dazzling.manuals.hits": found.length,
+      "dazzling.manuals.best_score": found.length ? Number(found[0].score.toFixed(3)) : undefined,
+    });
+    return found;
+  });
   const excerpts = sections.length
     ? sections.map((m, i) => `[${i + 1}] ${m.title}, section "${m.section}":\n${m.text}`).join("\n\n")
     : "(no matching manual sections)";
@@ -378,21 +436,48 @@ Repair rules:
       temperature: 0.4,
     };
     if (model.includes("gemma-4")) input.chat_template_kwargs = { enable_thinking: false };
-    try {
-      const out = await env.AI.run(model, input, gateway);
-      const reply = String((out && (out.response ?? out.choices?.[0]?.message?.content)) || "").trim();
-      if (reply) {
-        return json({ reply }, 200, {
-          "cache-control": "no-store",
-          "server-timing": `ai;dur=${Date.now() - t0}`,
-          "x-ai-model": model,
-          "x-manual-hits": String(sections.length),
-          "x-manual-matches": sections.map((m) => `${m.source.replace(/\.md$/, "")}#${m.section.replace(/[^A-Za-z0-9 &-]/g, "")}=${m.score.toFixed(2)}`).join(", "),
+    const reply = await tracing.enterSpan(`chat ${model}`, async (span) => {
+      span.setAttributes({
+        "gen_ai.operation.name": "chat",
+        "gen_ai.provider.name": AI_PROVIDER,
+        "gen_ai.request.model": model,
+        "gen_ai.request.max_tokens": input.max_tokens,
+        "gen_ai.request.temperature": input.temperature,
+        ...identity,
+      });
+      try {
+        const out = await env.AI.run(model, input, gateway);
+        const usage = (out && out.usage) || {};
+        const text = String((out && (out.response ?? out.choices?.[0]?.message?.content)) || "").trim();
+        span.setAttributes({
+          "gen_ai.response.model": model,
+          "gen_ai.usage.input_tokens": usage.prompt_tokens,
+          "gen_ai.usage.output_tokens": usage.completion_tokens,
         });
+        if (!text) {
+          span.setAttribute("error.type", "empty_response");
+          span.setStatus({ code: "error", message: "Model returned an empty reply" });
+          console.error(JSON.stringify({ msg: "assistant_empty", model }));
+          return "";
+        }
+        span.setStatus({ code: "ok" });
+        return text;
+      } catch (err) {
+        span.recordException(err instanceof Error ? err : String(err));
+        span.setAttribute("error.type", (err && err.name) || "model_error");
+        span.setStatus({ code: "error", message: "Model call failed" });
+        console.error(JSON.stringify({ msg: "assistant_failed", model, err: String(err) }));
+        return "";
       }
-      console.error(JSON.stringify({ msg: "assistant_empty", model }));
-    } catch (err) {
-      console.error(JSON.stringify({ msg: "assistant_failed", model, err: String(err) }));
+    });
+    if (reply) {
+      return json({ reply }, 200, {
+        "cache-control": "no-store",
+        "server-timing": `ai;dur=${Date.now() - t0}`,
+        "x-ai-model": model,
+        "x-manual-hits": String(sections.length),
+        "x-manual-matches": sections.map((m) => `${m.source.replace(/\.md$/, "")}#${m.section.replace(/[^A-Za-z0-9 &-]/g, "")}=${m.score.toFixed(2)}`).join(", "),
+      });
     }
   }
   return json({ error: "assistant_unavailable" }, 502);

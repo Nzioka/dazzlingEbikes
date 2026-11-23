@@ -5,7 +5,9 @@
   "name": "dazzling-shop",
   "main": "src/index.js",
   "compatibility_date": "2026-11-01",
-  "observability": { "enabled": true },
+  // Logs plus traces. Traces sample every request (head_sampling_rate defaults to 1)
+  // and carry the Rider Assistant's agent spans (metadata only, no message text).
+  "observability": { "enabled": true, "traces": { "enabled": true } },
 
   // Smart Placement: Cloudflare may run the Worker code near the database when that
   // is faster. Static assets are still served from the city closest to the visitor.
