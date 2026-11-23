@@ -86,7 +86,9 @@ Reindexing is safe live as long as the manuals haven't changed.
   You get the block page. Find its Ray ID in Security Events, next to the *Login burst* hits.
 - **Say:** "We built a store and an AI assistant and wrote no security code. The platform stopped this before our code ran."
 
-**NEXT:** "Let's look at what keeps that assistant safe."
+**NEXT (slide 12 recap):**
+
+- **Say:** "A store with no server: built, secured, fast and smart. Workers, D1, Static Assets, R2, Vectorize, Workers AI, AI Gateway, Turnstile, WAF, rate limiting and Access. No VM, no public IP, nothing to patch."
 
 ## If asked
 
