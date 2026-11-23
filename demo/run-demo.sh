@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Dazzling E-Bikes live demo: six beats and a reveal.
 # Usage: ./demo/run-demo.sh [https://shop.nzioka.dev]
-# Backup for the browser demo in demo/VISUAL-DEMO.md (same beat numbers).
+# Backup for the browser demo in demo/VISUAL-DEMO.md (each visual beat names the terminal beat to use).
 # Press Enter to move to the next step, so you can talk between beats.
 
 set -u
